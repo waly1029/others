@@ -152,6 +152,69 @@ IO模型成本？为什么有BIO、NIO、OIO、EPOLL、AIO
 6. 重定向：不是命令，是一种机制
    - < >
 7. 管道 |
-8. PageCache kernel方案
+8. PageCache kernel方案。例如打开同一个文件，这个文件在物理上是一个，多个程序访问的时候，会有一个seek来指向这个文件的pagecache不同的偏移量。
    - int 0x80:128-->放入寄存器：终端描述符匹配0、1、2、128 call back方法、255
-   
+   - 程序在物理内存连续，但是映射的实际函数是乱序。使用了page来映射，4kB的块。
+9. page cache是内核维护的中间层
+   - 使用多大内存 
+   - 是否淘汰
+   - 是否延迟，是否丢失数据
+> page cache优化IO性能，丢失数据
+
+   ```
+   [root@fox02 ~]# sysctl -a | grep dirty
+    vm.dirty_background_bytes = 0
+    vm.dirty_background_ratio = 10
+    vm.dirty_bytes = 0
+    vm.dirty_expire_centisecs = 3000
+    vm.dirty_ratio = 20
+    vm.dirty_writeback_centisecs = 500
+    vm.dirtytime_expire_seconds = 43200
+   ```
+   - buffered IO 速度快于普通的IO，因为减少了大量的系统调用。只有当8kB的缓冲区慢了之后才执行一次系统调用。
+
+# 网络IO
+## 命令
+> lsof -p 
+> netstat -natp
+> tcpdump
+
+## tpc
+>1. 面向连接的可靠的协议
+   >>- 三次握手-->内核开辟资源
+   >>- 三次握手之后开辟资源，资源代表了所谓的连接。cs都会开辟资源。
+>2. socket是一个四元组(CIP, CPOR, SIP, SPOR)是内核级；即使不调用accept内核也会建立连接和内容接受。服务器即使在阻塞阶段。
+>3. 面试题：c为aip，cport，s为xip，xport。IP地址代表主机，通过端口号进程之间建立关系。一台服务器可以启动多个服务进行listen，但是listen端口号不可重复。
+   >>- 服务端是否需要为client的链接分配一个随机端口号？
+       不需要
+   >>- 客户端可以多个port链接服务器端同一个port
+   >>- 如果c端65535个端口已经建立去a服务器某一个端口，可不可以在从c建立端口去b服务器或者同服务器的其他端口号。也就是端口号是否会重复使用在客户端？
+       可以。只要socket唯一，因为socket是四元组。
+![netio](./netIO.png)
+   >>- win窗口
+   >>- 内核在阻塞情况下超过缓冲区大小会丢掉过多数据
+>4. keepalive
+   >>- 如果双方建立了连接，长时间不说话，你可以确定对方还在吗？
+---
+## 网络IO 变化模型
+> strace -ff -o out cmd
+1. 同步
+2. 异步；没有异步阻塞模型
+
+1. 阻塞
+2. 非阻塞
+
+## C10k
+- BIO的弊端：阻塞blocking
+- NIO
+  - 优势：通过一个或几个线程，来解决N个IO链接的处理。
+  - 弊端：虽然一个线程可以解决所有问题，但是会触发系统调用。引入C10K问题，单线程每循环一次，O（n）复杂度recv调用。很多调用是浪费的，1万个调用中可能只有两三个有效调用。无效无用read被调起。遍历所有，用户态和内核态切换才能实现。每条路消耗一次系统调用。
+![nio-model](./NIO.png)
+- 多路复用器。多路的路是每一个IO
+  - 一次系统调用访问所有路，获得其中的IO状态。然后由程序自己对着有状态的IO进行读写R/W。只要程序自己读写，那么你的IO模型就是同步的。
+![多路复用器-model](./DLFYQ.png)
+
+---
+
+## 网络通信IO，基于socket
+BIO-->NIO-->多路复用器
