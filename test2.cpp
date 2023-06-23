@@ -401,45 +401,57 @@ int divide(int x, int y)
     }
 }
 
-void test8()
-{
-    cout << "================================\n";
-    cout << add(46, 20) << endl;
-    cout << neg(46, 20) << endl;
-    cout << mult(46, -20) << endl;
-    cout << divide(-2147483648, 1) << endl;
+// void test8()
+// {
+//     cout << "================================\n";
+//     cout << add(46, 20) << endl;
+//     cout << neg(46, 20) << endl;
+//     cout << mult(46, -20) << endl;
+//     cout << divide(-2147483648, 1) << endl;
 
-    cout << INT_MIN << endl;
-    cout << -INT_MIN << endl;
-}
+//     cout << INT_MIN << endl;
+//     cout << -INT_MIN << endl;
+// }
 
-void mergeSort(vector<int>& v1, int l, int r) {
-    if(l == r) return;
-    int mid = l + (l-r)>>1;
-    mergeSort(v1, l, mid);
-    mergeSort(v1, mid+1, r);
-    merge(v1, l, mid, r);
-}
+// void mergeSort(vector<int>& v1, int l, int r) {
+//     if(l == r) return;
+//     int mid = l + (l-r)>>1;
+//     mergeSort(v1, l, mid);
+//     mergeSort(v1, mid+1, r);
+//     merge(v1, l, mid, r);
+// }
 
-void merge(vector<int>& v1, int l, int m, int r) {
-    vector<int> help(r-l+1);
-    int i = 0;
-    int p1 = l;
-    int p2 = m + 1;
-    while(p1<=m && p2<=r) {
-        help[i++] = v1[p1]<=v1[p2] ? v1[p1++]:v1[p2++];
-    }
-    while(p1<=m)
-        help[i++]=v1[p1++];
-    while (p2<=r)
-        help[i++]=v1[p2++];
-    for(int i=0; i<help.size(); ++i)
-        v1[l+i] = help[i];
+// void merge(vector<int>& v1, int l, int m, int r) {
+//     vector<int> help(r-l+1);
+//     int i = 0;
+//     int p1 = l;
+//     int p2 = m + 1;
+//     while(p1<=m && p2<=r) {
+//         help[i++] = v1[p1]<=v1[p2] ? v1[p1++]:v1[p2++];
+//     }
+//     while(p1<=m)
+//         help[i++]=v1[p1++];
+//     while (p2<=r)
+//         help[i++]=v1[p2++];
+//     for(int i=0; i<help.size(); ++i)
+//         v1[l+i] = help[i];
     
+// }
+
+void printProcess(int i, int n, bool isDown) {
+    if(i > n) return;
+
+    printProcess(i+1, n, true);
+    cout << (isDown == true ? "Down " : "Up ");
+    printProcess(i+1, n, false);
+}
+void printAll(int n) {
+    printProcess(1, n, true);
 }
 
 void test9() {
-    
+    int n = 3;
+    printAll(n);
 }
 
 int main()
@@ -453,6 +465,7 @@ int main()
     // test6();
     // test7();
     // test8();
+    test9();
 
     // cout << sizeof(int)*8 << endl;
     // cout << sizeof(long)*8 << endl;
