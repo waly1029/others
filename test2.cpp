@@ -2,6 +2,7 @@
 #include <random>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 // #include <unordered_multimap>
 using namespace std;
 
@@ -213,25 +214,25 @@ void test5()
     cout << (&a1 == &a2) << endl;
 }
 
-class Node
-{
-    int value;
+// class Node
+// {
+//     int value;
 
-public:
-    Node(int value) : value(value) {}
+// public:
+//     Node(int value) : value(value) {}
 
-    bool operator<(const Node &other) const
-    {
-        return value < other.value;
-    }
-};
+//     bool operator<(const Node &other) const
+//     {
+//         return value < other.value;
+//     }
+// };
 
-void test6()
-{
-    map<Node, int> mmap;
-    Node node1 = Node(1);
-    mmap.insert(pair<Node, int>(node1, 1));
-}
+// void test6()
+// {
+//     map<Node, int> mmap;
+//     Node node1 = Node(1);
+//     mmap.insert(pair<Node, int>(node1, 1));
+// }
 
 class BitMap
 {
@@ -454,6 +455,199 @@ void test9() {
     printAll(n);
 }
 
+class Edge;
+class Node {
+public:
+    // 入度
+    int in;
+    // 出度
+    int out;
+    // 本身数据
+    int value;
+    // 到达的Node
+    vector<Node*> nexts;
+    // 发散出去的边
+    vector<Edge*> edges;
+public:
+    Node(int value) {
+        value = value;
+        in = 0;
+        out = 0;
+    }
+    // ~Node(){
+    //     // 释放nexts
+    //     for (Node* next: nexts) {
+    //         delete next;
+    //     }
+    //     nexts.clear();
+    //     // 释放edges
+    //     for (Edge* edge: edges) {
+    //         delete edge;
+    //     }
+    //     edges.clear();
+    // }
+};
+
+class Edge{
+public:
+    int weight;
+    Node* from;
+    Node* to;
+public:
+    Edge(int weight, Node* from, Node* to): weight(weight), from(from), to(to) {}
+};
+
+class Graph {
+public:
+    unordered_map<int, Node*> nodes;
+    unordered_set<Edge*> edges;
+public:
+    Graph() {}
+    ~Graph() {
+        // 释放nodes
+        for (auto it = nodes.begin(); it != nodes.end(); ++it) {
+            delete it->second;
+        }
+        nodes.clear();
+
+        // 释放edges
+        for (Edge* edge : edges) {
+            delete edge;
+        }
+        edges.clear();
+    }
+};
+
+Graph createGraph(vector<vector<int>>& matrix) {
+    Graph* graph = new Graph();
+    for(int i = 0; i < matrix.size(); i++) {
+        int from = matrix[i][0];
+        int to = matrix[i][1];
+        int weight = matrix[i][2];
+
+        if(graph->nodes.find(from) != graph->nodes.end())
+            graph->nodes.insert(make_pair(from, new Node(from)));
+        if(graph->nodes.find(to) != graph->nodes.end())
+            graph->nodes.insert(make_pair(to, new Node(to)));
+        
+        Node* fromNode = graph->nodes[from];
+        Node* toNode = graph->nodes[to];
+        Edge* newEdge = new Edge(weight, fromNode, toNode);
+        fromNode->nexts.push_back(toNode);
+        fromNode->out++;
+        toNode->in++;
+        fromNode->edges.push_back(newEdge);
+        graph->edges.insert(newEdge);
+    }
+    return *graph;
+}
+#include <queue>
+void bfs(Node* node) {
+    if(!node)
+        return;
+    queue<Node*> q;
+    unordered_set<Node*> uset;
+    q.push(node);
+    uset.insert(node);
+    while(!q.empty()) {
+        Node* cur = q.front();
+        q.pop();
+        cout << cur->value << endl;
+        for(auto next: cur->nexts) {
+            if(uset.find(next) != uset.end()) {
+                uset.insert(next);
+                q.push(next);
+            }
+        }
+    }
+}
+#include <stack>
+void dfs(Node* node) {
+    if(!node) return;
+    stack<Node*> st;
+    unordered_set<Node*> uset;
+    st.push(node);
+    uset.insert(node);
+    cout << node->value << endl;
+    while(!st.empty()) {
+        Node* cur = st.top();
+        st.pop();
+        for(auto next: cur->nexts) {
+            if(uset.find(cur) != uset.end()) {
+                st.push(cur);
+                st.push(next);
+                uset.insert(next);
+                cout << next->value << endl;
+                break;
+            }
+        }
+    }
+}
+// 拓补排序入度为0点开始，清除此点和所有影响的边
+vector<Node*> sortedTopology(Graph* graph) {
+    unordered_map<Node*, int> inMap;
+    queue<Node*> zeroInQueue;
+    for(auto it: graph->nodes) {
+        inMap.insert(make_pair(it.second, it.second->in));
+        if(it.second->in == 0) {
+            zeroInQueue.push(it.second);
+        }
+    }
+    vector<Node*> res;
+    while(!zeroInQueue.empty()) {
+        Node* cur = zeroInQueue.front();
+        zeroInQueue.pop();
+        res.push_back(cur);
+        for(Node* next: cur->nexts) {
+            inMap.insert(make_pair(next, inMap[next]--));
+            if(inMap[next] == 0) {
+                zeroInQueue.push(next);
+            }
+        }
+    }
+    return res;
+}
+// K算法最小生成树 无向图
+// 最小边加入是否有环
+// 并查集判断是否有环
+
+// P算法
+
+// Dijkstra算法 需要出发点，到后序每个点的最短距离
+// 可以有权值为负数的边，但是不能有累加和权值为负数的环
+
+void test10() {
+
+    std::priority_queue<int, std::vector<int>, std::greater<int>> pq;
+
+    pq.push(5);
+    pq.push(2);
+    pq.push(7);
+    pq.push(1);
+    pq.push(8);
+
+    while (!pq.empty()) {
+        std::cout << pq.top() << " ";
+        pq.pop();
+    }
+}
+
+int lessMoeny(vector<int>& v) {
+    priority_queue<int, vector<int>, greater<int>> pQ;
+    for (int i = 0; i < v.size(); ++i)
+        pQ.push(v[i]);
+    int sum = 0;
+    int cur = 0;
+    while (pQ.size() > 1) {
+        cur = pQ.top();
+        pQ.pop();
+        cur += pQ.top();
+        pQ.pop();
+        sum += cur;
+        pQ.push(cur);
+    }
+    return sum;
+}
 int main()
 {
 
@@ -466,6 +660,9 @@ int main()
     // test7();
     // test8();
     test9();
+    // test10();
+    vector<int> v = {10, 20, 30};
+    cout << lessMoeny(v) << endl;
 
     // cout << sizeof(int)*8 << endl;
     // cout << sizeof(long)*8 << endl;
